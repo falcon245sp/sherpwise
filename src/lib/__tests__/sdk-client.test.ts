@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { 
   getOntaraClient, 
   resetOntaraClient,
@@ -9,8 +9,17 @@ import {
   checkHealth,
 } from '../sdk-client';
 
+interface MockOntaraClient {
+  config: unknown;
+  matchExpression: Mock;
+  classifyExpression: Mock;
+  searchStandards: Mock;
+  getSchema: Mock;
+  health: Mock;
+}
+
 vi.mock('@ontara/core-sdk', () => {
-  class MockOntaraClient {
+  class MockOntaraClientImpl {
     matchExpression = vi.fn();
     classifyExpression = vi.fn();
     searchStandards = vi.fn();
@@ -21,7 +30,7 @@ vi.mock('@ontara/core-sdk', () => {
   }
 
   return {
-    OntaraClient: MockOntaraClient,
+    OntaraClient: MockOntaraClientImpl,
     OntaraError: class OntaraError extends Error {
       constructor(message: string, public code?: string, public statusCode?: number, public details?: unknown) {
         super(message);
@@ -63,7 +72,7 @@ describe('SDK Client Wrapper', () => {
     });
 
     it('should initialize with environment variables', () => {
-      const client = getOntaraClient() as { config: { baseUrl: string; timeout: number } };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       expect(client.config).toHaveProperty('baseUrl');
       expect(client.config).toHaveProperty('timeout');
     });
@@ -74,7 +83,7 @@ describe('SDK Client Wrapper', () => {
       delete process.env.ONTARA_API_TIMEOUT;
       
       resetOntaraClient();
-      const client = getOntaraClient() as { config: { baseUrl: string; timeout: number } };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       
       expect(client.config).toMatchObject({
         baseUrl: 'http://localhost:3001',
@@ -103,7 +112,7 @@ describe('SDK Client Wrapper', () => {
         found: false,
       };
       
-      const client = getOntaraClient() as { classifyExpression: ReturnType<typeof vi.fn> };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       client.classifyExpression.mockResolvedValue(mockResult);
       
       const result = await classifyExpression('x^2 + 2x + 1');
@@ -122,7 +131,7 @@ describe('SDK Client Wrapper', () => {
         found: false,
       };
       
-      const client = getOntaraClient() as { matchExpression: ReturnType<typeof vi.fn> };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       client.matchExpression.mockResolvedValue(mockResult);
       
       const result = await matchExpression({ latex: 'x^2 + 2x + 1' });
@@ -147,7 +156,7 @@ describe('SDK Client Wrapper', () => {
         total: 1,
       };
       
-      const client = getOntaraClient() as { searchStandards: ReturnType<typeof vi.fn> };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       client.searchStandards.mockResolvedValue(mockResult);
       
       const result = await searchStandards({ query: 'algebra', limit: 10, offset: 0 });
@@ -166,7 +175,7 @@ describe('SDK Client Wrapper', () => {
         total: 0,
       };
       
-      const client = getOntaraClient() as { searchStandards: ReturnType<typeof vi.fn> };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       client.searchStandards.mockResolvedValue(mockResult);
       
       const result = await searchStandards();
@@ -189,7 +198,7 @@ describe('SDK Client Wrapper', () => {
         summary: 'Math ontology graph with standards and expressions',
       };
       
-      const client = getOntaraClient() as { getSchema: ReturnType<typeof vi.fn> };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       client.getSchema.mockResolvedValue(mockSchema);
       
       const result = await getSchema();
@@ -207,7 +216,7 @@ describe('SDK Client Wrapper', () => {
         version: '1.0.0',
       };
       
-      const client = getOntaraClient() as { health: ReturnType<typeof vi.fn> };
+      const client = getOntaraClient() as unknown as MockOntaraClient;
       client.health.mockResolvedValue(mockHealth);
       
       const result = await checkHealth();

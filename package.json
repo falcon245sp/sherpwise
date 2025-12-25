@@ -18,6 +18,7 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
+    "@ontara/core-sdk": "file:../ontara-core/sdk/typescript",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
