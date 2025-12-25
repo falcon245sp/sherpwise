@@ -88,6 +88,7 @@ ontara-web/
 See `.env.example` for required environment variables.
 
 Key variables:
+
 - `NEXT_PUBLIC_ONTARA_API_URL`: Backend API URL
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Clerk authentication key
 - `CLERK_SECRET_KEY`: Clerk secret key
