@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ontara Web Application
+
+Web application for math standards alignment and curriculum analysis, built for districts and teachers.
+
+## Features
+
+- 📚 **Standards Browser**: Browse and search math standards from Common Core, state frameworks, and custom district standards
+- 🔍 **Expression Classification**: Classify mathematical expressions and align them to standards
+- 📄 **Document Upload**: Upload curriculum documents (PDF, DOCX, Google Docs) for automated analysis
+- 👥 **Multi-tenant**: Support for districts, schools, and individual teachers
+- 📊 **Analytics**: Track alignment coverage and curriculum gaps
+- 🔐 **Authentication**: Secure login with Google OAuth and email/password
+
+## Tech Stack
+
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Authentication**: Clerk
+- **Testing**: Vitest + Playwright
+- **Backend**: Ontara Core SDK (@ontara/core-sdk)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- npm or pnpm
+- Access to Ontara Core backend services
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository
+git clone https://github.com/The-Ontara-Institute/ontara-web.git
+cd ontara-web
+
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Edit .env.local with your configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Run development server
+npm run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run tests
+npm run test
 
-## Learn More
+# Run E2E tests
+npm run test:e2e
 
-To learn more about Next.js, take a look at the following resources:
+# Run linter
+npm run lint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Type check
+npm run type-check
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Format code
+npm run format
+```
 
-## Deploy on Vercel
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+ontara-web/
+├── src/
+│   ├── app/              # Next.js app router pages
+│   ├── components/       # React components
+│   ├── lib/              # Utility functions and SDK client
+│   ├── hooks/            # Custom React hooks
+│   └── test/             # Test utilities
+├── e2e/                  # Playwright E2E tests
+├── public/               # Static assets
+└── .github/workflows/    # CI/CD workflows
+```
+
+## Environment Variables
+
+See `.env.example` for required environment variables.
+
+Key variables:
+- `NEXT_PUBLIC_ONTARA_API_URL`: Backend API URL
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Clerk authentication key
+- `CLERK_SECRET_KEY`: Clerk secret key
+
+## Deployment
+
+### Vercel (Recommended)
+
+```bash
+npm install -g vercel
+vercel deploy
+```
+
+### Google Cloud Run
+
+```bash
+gcloud builds submit --tag gcr.io/PROJECT_ID/ontara-web
+gcloud run deploy ontara-web --image gcr.io/PROJECT_ID/ontara-web
+```
+
+## Contributing
+
+This is a private repository for The Ontara Institute. Please contact the maintainers for contribution guidelines.
+
+## License
+
+Apache License 2.0 - See LICENSE file for details
+
+## Support
+
+For issues and questions, contact: support@ontara.org

@@ -1,0 +1,49 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-vercel:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    if: github.repository == 'The-Ontara-Institute/ontara-web'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Deploy to Vercel
+        run: |
+          npm install -g vercel@latest
+          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_ONTARA_API_URL: ${{ secrets.NEXT_PUBLIC_ONTARA_API_URL }}
+          NEXT_PUBLIC_ONTARA_MCP_URL: ${{ secrets.NEXT_PUBLIC_ONTARA_MCP_URL }}
+
+  # Alternative: Deploy to Google Cloud Run (uncomment if preferred)
+  # deploy-cloud-run:
+  #   name: Deploy to Cloud Run
+  #   runs-on: ubuntu-latest
+  #   if: github.repository == 'The-Ontara-Institute/ontara-web'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: google-github-actions/setup-gcloud@v2
+  #       with:
+  #         service_account_key: ${{ secrets.GCP_SA_KEY }}
+  #         project_id: ${{ secrets.GCP_PROJECT_ID }}
+  #     - run: |
+  #         gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web
+  #         gcloud run deploy ontara-web \
+  #           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web \
+  #           --platform managed \
+  #           --region us-central1 \
+  #           --allow-unauthenticated
