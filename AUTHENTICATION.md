@@ -91,7 +91,7 @@ To set user roles and district/site assignments, you need to configure user meta
 
 ### Authentication Components
 
-- **`src/middleware.ts`** - Route protection middleware
+- **`src/proxy.ts`** - Route protection middleware
 - **`src/app/sign-in/[[...sign-in]]/page.tsx`** - Sign-in page
 - **`src/app/sign-up/[[...sign-up]]/page.tsx`** - Sign-up page
 - **`src/app/dashboard/page.tsx`** - Protected dashboard (requires auth)
@@ -173,7 +173,7 @@ if (hasAccessToSite(user.role, user.siteIds, targetSiteId)) {
 
 ## Protected Routes
 
-The middleware (`src/middleware.ts`) automatically protects all routes except:
+The middleware (`src/proxy.ts`) automatically protects all routes except:
 
 - `/` - Home page (public)
 - `/sign-in/*` - Sign-in pages
