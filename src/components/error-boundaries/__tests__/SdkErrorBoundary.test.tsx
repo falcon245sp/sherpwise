@@ -56,7 +56,7 @@ describe('SdkErrorBoundary', () => {
   });
 
   it('should render default error UI for OntaraError', () => {
-    const error = new OntaraError('Service unavailable', 'SERVICE_ERROR', 503);
+    const error = new OntaraError('Service unavailable');
 
     render(
       <SdkErrorBoundary>

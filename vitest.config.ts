@@ -26,6 +26,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@ontara/core-sdk': path.resolve(__dirname, './src/__mocks__/@ontara/core-sdk.ts'),
     },
   },
 });

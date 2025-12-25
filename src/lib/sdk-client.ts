@@ -56,6 +56,14 @@ export async function checkHealth(): Promise<{ status: string; service: string; 
   return client.health();
 }
 
+export async function getStandardById(id: string): Promise<Standard | null> {
+  const client = getOntaraClient();
+  const result = await client.searchStandards({ query: id, limit: 1 });
+  
+  const exactMatch = result.standards.find((s: Standard) => s.id === id);
+  return exactMatch || null;
+}
+
 export type {
   MatchExpressionParams,
   MatchExpressionResult,

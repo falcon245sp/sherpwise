@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useOntaraUser, useHasRole } from "@/lib/auth/hooks";
+import { useHasRole } from "@/lib/auth/hooks";
 import { UserRole } from "@/lib/auth/types";
 
 interface SidebarProps {
@@ -21,7 +21,6 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useOntaraUser();
   const canManageUsers = useHasRole([UserRole.DistrictAdmin, UserRole.SiteAdmin]);
 
   const isActive = (path: string) => {

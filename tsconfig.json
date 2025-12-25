@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@ontara/core-sdk": ["./src/__mocks__/@ontara/core-sdk.ts"]
     }
   },
   "include": [
