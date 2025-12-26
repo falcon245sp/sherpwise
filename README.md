@@ -120,3 +120,90 @@ Apache License 2.0 - See LICENSE file for details
 ## Support
 
 For issues and questions, contact: support@ontara.org
+
+## Deployment
+
+This application supports two deployment options:
+
+### Vercel (Recommended)
+
+Vercel provides the easiest deployment experience for Next.js applications:
+
+```bash
+npm install -g vercel
+vercel deploy --prod
+```
+
+**Benefits:**
+- Zero-config deployment
+- Automatic HTTPS and CDN
+- Preview deployments for PRs
+- Excellent Next.js support
+
+See [`deploy/DEPLOYMENT_RUNBOOK.md`](./deploy/DEPLOYMENT_RUNBOOK.md#vercel-deployment-recommended) for detailed instructions.
+
+### Google Cloud Run (Alternative)
+
+For teams already using GCP or requiring more infrastructure control:
+
+```bash
+export GCP_PROJECT_ID="your-project-id"
+cd deploy/scripts
+./deploy-cloud-run.sh
+```
+
+**Benefits:**
+- Cost-effective at scale
+- Full infrastructure control
+- Integration with GCP services
+
+See [`deploy/DEPLOYMENT_RUNBOOK.md`](./deploy/DEPLOYMENT_RUNBOOK.md#google-cloud-run-deployment-alternative) for detailed instructions.
+
+### Deployment Documentation
+
+- **[Deployment Runbook](./deploy/DEPLOYMENT_RUNBOOK.md)**: Comprehensive 649-line guide covering:
+  - Pre-deployment checklist
+  - Step-by-step deployment procedures
+  - Environment configuration
+  - Monitoring setup (Sentry, Google Analytics)
+  - Rollback procedures
+  - Troubleshooting guide
+  - Cost estimates
+
+- **[Deploy Scripts](./deploy/scripts/)**: Automated deployment scripts
+  - `deploy-vercel.sh` - Deploy to Vercel
+  - `deploy-cloud-run.sh` - Deploy to Cloud Run
+  - `setup-secrets.sh` - Configure secrets
+  - `rollback.sh` - Rollback deployments
+
+- **[Monitoring Setup](./deploy/monitoring/)**: Error tracking and analytics guides
+
+### Environment Variables
+
+All required environment variables are documented in [`.env.example`](./.env.example).
+
+**Critical Variables:**
+- `NEXT_PUBLIC_ONTARA_API_URL` - Backend API URL
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk authentication
+- `CLERK_SECRET_KEY` - Clerk secret
+- `ONTARA_API_KEY` - Backend API key
+
+### CI/CD
+
+GitHub Actions workflows automatically:
+- Run tests and type checking on all PRs
+- Deploy to Vercel on push to `main`
+- Generate code coverage reports
+
+See [`.github/workflows/`](./.github/workflows/) for workflow definitions.
+
+### Cost Estimates
+
+**Vercel**: $20-$100/month (Pro plan recommended for production)
+**Cloud Run**: $0-$50/month (Free tier available)
+**Additional Services**: $30-$100/month (Clerk, Sentry, etc.)
+
+**Total Estimated**: $50-$250/month
+
+See [deployment runbook](./deploy/DEPLOYMENT_RUNBOOK.md#cost-estimates) for detailed breakdown.
+

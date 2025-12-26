@@ -4,46 +4,170 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
 
 jobs:
   deploy-vercel:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     if: github.repository == 'The-Ontara-Institute/ontara-web'
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - name: Deploy to Vercel
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
         run: |
-          npm install -g vercel@latest
-          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+          npm run lint
+          npm run type-check
+          npm run test
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+      
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=${{ inputs.environment || 'production' }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           NEXT_PUBLIC_ONTARA_API_URL: ${{ secrets.NEXT_PUBLIC_ONTARA_API_URL }}
           NEXT_PUBLIC_ONTARA_MCP_URL: ${{ secrets.NEXT_PUBLIC_ONTARA_MCP_URL }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          if [ "${{ inputs.environment || 'production' }}" = "production" ]; then
+            url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          else
+            url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          fi
+          echo "url=$url" >> $GITHUB_OUTPUT
+          echo "Deployed to: $url"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      
+      - name: Create Sentry Release (Optional)
+        if: vars.SENTRY_ENABLED == 'true'
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ontara
+          SENTRY_PROJECT: ontara-web
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            npm install -g @sentry/cli
+            sentry-cli releases new ${{ github.sha }}
+            sentry-cli releases set-commits ${{ github.sha }} --auto
+            sentry-cli releases finalize ${{ github.sha }}
+            sentry-cli releases deploys ${{ github.sha }} new -e ${{ inputs.environment || 'production' }}
+          fi
+      
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
 
   # Alternative: Deploy to Google Cloud Run (uncomment if preferred)
   # deploy-cloud-run:
   #   name: Deploy to Cloud Run
   #   runs-on: ubuntu-latest
   #   if: github.repository == 'The-Ontara-Institute/ontara-web'
+  #   environment:
+  #     name: production
+  #   
   #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: google-github-actions/setup-gcloud@v2
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     
+  #     - name: Authenticate to Google Cloud
+  #       uses: google-github-actions/auth@v2
   #       with:
-  #         service_account_key: ${{ secrets.GCP_SA_KEY }}
+  #         credentials_json: ${{ secrets.GCP_SA_KEY }}
+  #     
+  #     - name: Set up Cloud SDK
+  #       uses: google-github-actions/setup-gcloud@v2
+  #       with:
   #         project_id: ${{ secrets.GCP_PROJECT_ID }}
-  #     - run: |
-  #         gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web
+  #     
+  #     - name: Configure Docker for GCR
+  #       run: gcloud auth configure-docker
+  #     
+  #     - name: Build and Push Docker Image
+  #       run: |
+  #         docker build \
+  #           --build-arg NEXT_PUBLIC_ONTARA_API_URL=${{ secrets.NEXT_PUBLIC_ONTARA_API_URL }} \
+  #           --build-arg NEXT_PUBLIC_ONTARA_MCP_URL=${{ secrets.NEXT_PUBLIC_ONTARA_MCP_URL }} \
+  #           --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }} \
+  #           -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web:${{ github.sha }} \
+  #           -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web:latest \
+  #           .
+  #         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web:${{ github.sha }}
+  #         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web:latest
+  #     
+  #     - name: Deploy to Cloud Run
+  #       run: |
   #         gcloud run deploy ontara-web \
-  #           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web \
+  #           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web:${{ github.sha }} \
   #           --platform managed \
   #           --region us-central1 \
-  #           --allow-unauthenticated
+  #           --allow-unauthenticated \
+  #           --service-account ontara-web@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+  #           --min-instances 0 \
+  #           --max-instances 10 \
+  #           --cpu 1 \
+  #           --memory 512Mi \
+  #           --timeout 300s \
+  #           --set-env-vars "NODE_ENV=production" \
+  #           --set-secrets "NEXT_PUBLIC_ONTARA_API_URL=ontara-web-api-url:latest" \
+  #           --set-secrets "NEXT_PUBLIC_ONTARA_MCP_URL=ontara-web-mcp-url:latest" \
+  #           --set-secrets "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=ontara-web-clerk-publishable-key:latest" \
+  #           --set-secrets "CLERK_SECRET_KEY=ontara-web-clerk-secret:latest" \
+  #           --set-secrets "ONTARA_API_KEY=ontara-web-api-key:latest"
+  #     
+  #     - name: Get Service URL
+  #       id: get-url
+  #       run: |
+  #         url=$(gcloud run services describe ontara-web \
+  #           --region us-central1 \
+  #           --format 'value(status.url)')
+  #         echo "url=$url" >> $GITHUB_OUTPUT
+  #     
+  #     - name: Deployment Summary
+  #       run: |
+  #         echo "## Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "- **Platform**: Google Cloud Run" >> $GITHUB_STEP_SUMMARY
+  #         echo "- **URL**: ${{ steps.get-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+  #         echo "- **Image**: gcr.io/${{ secrets.GCP_PROJECT_ID }}/ontara-web:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
